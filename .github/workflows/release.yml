@@ -1,46 +1,55 @@
-name: Publish
-
-on:
-  push:
-    tags:
-      - v*
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to upload artifacts to"
-        required: false
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v4
-    - name: Install JDK
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Install JDK
       uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
-        java-version: |
-          11
-          17
         cache: gradle
-    - name: Setup Android SDK
+        distribution: temurin
+        java-version: '11
+
+          17
+
+          '
+    - continue-on-error: true
+      name: Setup Android SDK
       uses: android-actions/setup-android@v3
-    - name: Install NDK
+    - continue-on-error: true
+      name: Install NDK
       uses: nttld/setup-ndk@v1
       with:
         ndk-version: r25c
-    - name: Register NDK
-      run: |
-        echo $PATH
-        echo 'ndk.path=/opt/hostedtoolcache/ndk/r25c/x64' >> local.properties
-    - name: Write GPG Sec Ring
+    - continue-on-error: true
+      name: Register NDK
+      run: 'echo $PATH
+
+        echo ''ndk.path=/opt/hostedtoolcache/ndk/r25c/x64'' >> local.properties
+
+        '
+    - continue-on-error: true
+      name: Write GPG Sec Ring
       run: echo '${{ secrets.GPG_KEY_CONTENTS }}' | base64 -d > /tmp/secring.gpg
-    - name: Update gradle.properties
-      run: echo -e "signing.secretKeyRingFile=/tmp/secring.gpg\nsigning.keyId=${{ secrets.SIGNING_KEY_ID }}\nsigning.password=${{ secrets.SIGNING_PASSWORD }}\nmavenCentralPassword=${{ secrets.SONATYPE_NEXUS_PASSWORD }}\nmavenCentralUsername=${{ secrets.SONATYPE_NEXUS_USERNAME }}" >> gradle.properties
-    - name: Upload Android Archives
+    - continue-on-error: true
+      name: Update gradle.properties
+      run: echo -e "signing.secretKeyRingFile=/tmp/secring.gpg\nsigning.keyId=${{
+        secrets.SIGNING_KEY_ID }}\nsigning.password=${{ secrets.SIGNING_PASSWORD }}\nmavenCentralPassword=${{
+        secrets.SONATYPE_NEXUS_PASSWORD }}\nmavenCentralUsername=${{ secrets.SONATYPE_NEXUS_USERNAME
+        }}" >> gradle.properties
+    - continue-on-error: true
+      name: Upload Android Archives
       run: ./gradlew publish --no-daemon --no-parallel --info --stacktrace
-    - name: Release and close
+    - continue-on-error: true
+      name: Release and close
       run: ./gradlew closeAndReleaseRepository
-    - name: Clean secrets
+    - continue-on-error: true
       if: always()
+      name: Clean secrets
       run: rm /tmp/secring.gpg
+name: Publish
+on:
+  repository_dispatch:
+    types: trigger-ga___release.yml
